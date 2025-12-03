@@ -190,6 +190,11 @@ class SocketHandler {
         });
       }
 
+      // 방 안의 모든 플레이어들에게 방 업데이트 전송
+      this.io.to(room.id).emit('roomUpdate', {
+        room: room.toJSON()
+      });
+
       // 방 안의 다른 플레이어들에게 알림
       socket.to(room.id).emit('playerJoined', {
         player: player.toLobbyJSON()
@@ -214,25 +219,38 @@ class SocketHandler {
    */
   handleLeaveRoom(socket) {
     const player = this.players.get(socket.id);
-    if (!player || !player.roomId) return;
+
+    console.log(`[Room] handleLeaveRoom called for ${socket.id}, has player: ${!!player}, has roomId: ${player?.roomId}`);
+
+    if (!player || !player.roomId) {
+      console.log(`[Room] Player ${socket.id} not in a room, skipping leave`);
+      return;
+    }
 
     const room = this.roomManager.getRoom(player.roomId);
-    if (!room) return;
+    if (!room) {
+      console.log(`[Room] Room ${player.roomId} not found for player ${socket.id}`);
+      player.leaveRoom();
+      return;
+    }
 
     const roomId = room.id;
+    const playerCountBefore = room.getPlayerCount();
 
     // 방에서 플레이어 제거
     room.removePlayer(socket.id);
     player.leaveRoom();
     socket.leave(roomId);
 
-    console.log(`[Room] Player ${socket.id} left room ${roomId}`);
+    console.log(`[Room] Player ${socket.id} left room ${roomId} (players: ${playerCountBefore} -> ${room.getPlayerCount()})`);
 
     // 방이 비었으면 삭제
     if (room.isEmpty()) {
       this.roomManager.deleteRoom(roomId);
       console.log(`[Room] Room ${roomId} deleted (empty)`);
     } else {
+      console.log(`[Room] Broadcasting room update to remaining ${room.getPlayerCount()} players`);
+
       // 다른 플레이어들에게 방 업데이트 전송
       this.io.to(roomId).emit('roomUpdate', {
         room: room.toJSON()
