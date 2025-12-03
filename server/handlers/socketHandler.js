@@ -231,8 +231,14 @@ class SocketHandler {
     // 방이 비었으면 삭제
     if (room.isEmpty()) {
       this.roomManager.deleteRoom(roomId);
+      console.log(`[Room] Room ${roomId} deleted (empty)`);
     } else {
-      // 다른 플레이어들에게 알림
+      // 다른 플레이어들에게 방 업데이트 전송
+      this.io.to(roomId).emit('roomUpdate', {
+        room: room.toJSON()
+      });
+
+      // 플레이어 퇴장 이벤트도 전송
       this.io.to(roomId).emit('playerLeft', {
         playerId: socket.id,
         newHostId: room.hostId

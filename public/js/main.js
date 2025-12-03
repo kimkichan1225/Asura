@@ -255,9 +255,6 @@ class AsuraGame extends EventEmitter {
   handleJoinRoom() {
     this.logger.info('Join room button clicked');
 
-    // 방 목록 요청
-    this.network.room.requestRoomList();
-
     // 방 참가 팝업 생성
     this.ui.popup.createPopup('joinRoomPopup', {
       title: '방 참가',
@@ -308,6 +305,9 @@ class AsuraGame extends EventEmitter {
       this.network.room.on('RoomListUpdated', (rooms) => {
         this.updateRoomList(rooms);
       });
+
+      // 방 목록 즉시 요청
+      this.network.room.requestRoomList();
 
       // 새로고침 버튼
       const refreshBtn = document.getElementById('refreshRoomListBtn');
