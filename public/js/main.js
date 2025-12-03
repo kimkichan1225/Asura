@@ -412,12 +412,12 @@ class AsuraGame extends EventEmitter {
       this.ui.popup.close('joinRoomPopup');
       // onRoomJoined에서 캐릭터 선택 창을 열 것임
     } catch (error) {
-      this.logger.error('Failed to join room by code:', error);
-
-      // 비밀번호가 필요한 경우 비밀번호 입력 팝업 표시
+      // 비밀번호가 필요한 경우 비밀번호 입력 팝업 표시 (로그 출력 안함)
       if (error.message === '비밀번호가 틀렸습니다.' || error.message.includes('비밀번호')) {
         this.showPasswordPopup(roomCode);
       } else {
+        // 비밀번호 에러가 아닌 경우만 로그 출력
+        this.logger.error('Failed to join room by code:', error);
         this.showError('방 참가 실패', error.message);
       }
     }

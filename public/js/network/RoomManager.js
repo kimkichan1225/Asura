@@ -129,7 +129,10 @@ export class RoomManager {
 
       return response;
     } catch (error) {
-      console.error('Failed to join room:', error);
+      // 비밀번호 에러는 예상된 동작이므로 로그 출력 안함
+      if (!error.message || (!error.message.includes('비밀번호') && error.message !== '비밀번호가 틀렸습니다.')) {
+        console.error('Failed to join room:', error);
+      }
       if (this.callbacks.onError) {
         this.callbacks.onError(error);
       }
