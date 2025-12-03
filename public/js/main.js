@@ -1027,13 +1027,12 @@ class AsuraGame extends EventEmitter {
    * 네트워크 오류 이벤트
    */
   onNetworkError(error) {
-    this.logger.error('Network error:', error);
-
     // 비밀번호 에러는 joinRoomByCode에서 별도로 처리하므로 여기서는 무시
     if (error.message && (error.message.includes('비밀번호') || error.message === '비밀번호가 틀렸습니다.')) {
       return;
     }
 
+    this.logger.error('Network error:', error);
     this.showError('네트워크 오류', error.message || '연결에 문제가 발생했습니다.');
   }
 
