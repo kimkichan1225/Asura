@@ -1,0 +1,1322 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Asura - 전투 게임</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Arial', sans-serif;
+      overflow: hidden;
+      background-color: #000;
+      background-image: url('./resources/Main-image.png');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+      color: #fff;
+    }
+
+    /* 배경 오버레이 */
+    .background-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(
+        180deg,
+        rgba(0, 0, 0, 0.3) 0%,
+        rgba(0, 0, 0, 0.5) 50%,
+        rgba(0, 0, 0, 0.7) 100%
+      );
+      z-index: 1;
+    }
+
+    /* 메인 컨테이너 */
+    #menu {
+      position: relative;
+      z-index: 10;
+      width: 100%;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 30px;
+    }
+
+    /* 타이틀 */
+    #menu h1 {
+      font-size: 72px;
+      font-weight: bold;
+      color: #fff;
+      text-shadow:
+        0 0 10px rgba(255, 0, 0, 0.8),
+        0 0 20px rgba(255, 0, 0, 0.6),
+        0 0 30px rgba(255, 0, 0, 0.4),
+        3px 3px 10px rgba(0, 0, 0, 0.9);
+      letter-spacing: 8px;
+      margin-bottom: 20px;
+      animation: titlePulse 3s ease-in-out infinite;
+    }
+
+    @keyframes titlePulse {
+      0%, 100% {
+        text-shadow:
+          0 0 10px rgba(255, 0, 0, 0.8),
+          0 0 20px rgba(255, 0, 0, 0.6),
+          0 0 30px rgba(255, 0, 0, 0.4),
+          3px 3px 10px rgba(0, 0, 0, 0.9);
+      }
+      50% {
+        text-shadow:
+          0 0 20px rgba(255, 0, 0, 1),
+          0 0 30px rgba(255, 0, 0, 0.8),
+          0 0 40px rgba(255, 0, 0, 0.6),
+          3px 3px 10px rgba(0, 0, 0, 0.9);
+      }
+    }
+
+    /* 버튼 컨테이너 */
+    .button-container {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      align-items: center;
+    }
+
+    /* 버튼 기본 스타일 */
+    .menu-button {
+      padding: 18px 60px;
+      font-size: 24px;
+      font-weight: bold;
+      background: linear-gradient(135deg, #c41e3a 0%, #8b0000 100%);
+      border: 3px solid #ff0000;
+      border-radius: 10px;
+      color: #fff;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow:
+        0 0 15px rgba(255, 0, 0, 0.5),
+        0 4px 15px rgba(0, 0, 0, 0.6);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      position: relative;
+      overflow: hidden;
+      min-width: 300px;
+    }
+
+    .menu-button::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.3);
+      transform: translate(-50%, -50%);
+      transition: width 0.5s, height 0.5s;
+    }
+
+    .menu-button:hover::before {
+      width: 300px;
+      height: 300px;
+    }
+
+    .menu-button:hover {
+      background: linear-gradient(135deg, #ff0000 0%, #c41e3a 100%);
+      border-color: #ff4444;
+      box-shadow:
+        0 0 25px rgba(255, 0, 0, 0.8),
+        0 6px 20px rgba(0, 0, 0, 0.8);
+      transform: translateY(-3px) scale(1.05);
+    }
+
+    .menu-button:active {
+      transform: translateY(0) scale(1.02);
+      box-shadow:
+        0 0 15px rgba(255, 0, 0, 0.6),
+        0 2px 10px rgba(0, 0, 0, 0.6);
+    }
+
+    /* 버튼 텍스트 */
+    .menu-button span {
+      position: relative;
+      z-index: 2;
+    }
+
+    /* 반응형 디자인 */
+    @media (max-width: 768px) {
+      #menu h1 {
+        font-size: 48px;
+        letter-spacing: 4px;
+      }
+
+      .menu-button {
+        padding: 15px 40px;
+        font-size: 20px;
+        min-width: 250px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      #menu h1 {
+        font-size: 36px;
+        letter-spacing: 2px;
+      }
+
+      .menu-button {
+        padding: 12px 30px;
+        font-size: 18px;
+        min-width: 200px;
+      }
+    }
+
+    /* 로딩 애니메이션 */
+    .loading {
+      pointer-events: none;
+      opacity: 0.6;
+    }
+
+    .loading::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 20px;
+      height: 20px;
+      margin: -10px 0 0 -10px;
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* 팝업 스타일 */
+    .popup-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .popup-content {
+      background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+      border: 2px solid #ff0000;
+      border-radius: 15px;
+      padding: 30px;
+      max-width: 500px;
+      width: 90%;
+      box-shadow: 0 0 30px rgba(255, 0, 0, 0.5);
+    }
+
+    .popup-content h2 {
+      color: #fff;
+      margin-bottom: 20px;
+      text-align: center;
+      font-size: 28px;
+      text-shadow: 0 0 10px rgba(255, 0, 0, 0.8);
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      color: #fff;
+      margin-bottom: 8px;
+      font-weight: bold;
+    }
+
+    .form-group input[type="text"],
+    .form-group input[type="password"],
+    .form-group input[type="number"],
+    .form-group input[type="range"] {
+      width: 100%;
+      padding: 10px;
+      background: rgba(0, 0, 0, 0.5);
+      border: 2px solid #ff0000;
+      border-radius: 5px;
+      color: #fff;
+      font-size: 16px;
+    }
+
+    .form-group input:focus {
+      outline: none;
+      border-color: #ff4444;
+      box-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+    }
+
+    .popup-buttons {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      margin-top: 20px;
+    }
+
+    .popup-button {
+      padding: 12px 30px;
+      font-size: 16px;
+      font-weight: bold;
+      background: linear-gradient(135deg, #444 0%, #222 100%);
+      border: 2px solid #666;
+      border-radius: 8px;
+      color: #fff;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .popup-button.primary {
+      background: linear-gradient(135deg, #c41e3a 0%, #8b0000 100%);
+      border-color: #ff0000;
+    }
+
+    .popup-button:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 15px rgba(255, 0, 0, 0.5);
+    }
+
+    .popup-button.primary:hover {
+      background: linear-gradient(135deg, #ff0000 0%, #c41e3a 100%);
+    }
+
+    .error-message {
+      color: #ff6666;
+      text-align: center;
+      font-size: 16px;
+      padding: 10px;
+    }
+
+    .room-list {
+      list-style: none;
+      max-height: 200px;
+      overflow-y: auto;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid #ff0000;
+      border-radius: 5px;
+      padding: 10px;
+      margin: 10px 0;
+    }
+
+    .room-list li {
+      padding: 10px;
+      margin: 5px 0;
+      background: rgba(255, 0, 0, 0.1);
+      border-radius: 5px;
+      color: #fff;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .room-list li:hover {
+      background: rgba(255, 0, 0, 0.3);
+      transform: translateX(5px);
+    }
+
+    .empty-message {
+      text-align: center;
+      color: #888;
+      font-style: italic;
+    }
+
+    .room-list-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .room-list-header h3 {
+      color: #fff;
+      margin: 0;
+    }
+
+    .icon-button {
+      background: rgba(255, 0, 0, 0.2);
+      border: 1px solid #ff0000;
+      border-radius: 5px;
+      padding: 5px 10px;
+      color: #fff;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .icon-button:hover {
+      background: rgba(255, 0, 0, 0.4);
+    }
+
+    /* 맵 선택 스타일 */
+    .map-selection {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 15px;
+      margin: 10px 0;
+    }
+
+    .map-option {
+      position: relative;
+      border: 3px solid transparent;
+      border-radius: 10px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      background: rgba(0, 0, 0, 0.3);
+    }
+
+    .map-option img {
+      width: 100%;
+      height: 100px;
+      object-fit: cover;
+      display: block;
+    }
+
+    .map-name {
+      padding: 8px;
+      text-align: center;
+      background: rgba(0, 0, 0, 0.7);
+      color: #fff;
+      font-weight: bold;
+      font-size: 14px;
+    }
+
+    .map-option:hover {
+      border-color: #ff4444;
+      transform: translateY(-3px);
+      box-shadow: 0 5px 15px rgba(255, 0, 0, 0.3);
+    }
+
+    .map-option.selected {
+      border-color: #ff0000;
+      box-shadow: 0 0 20px rgba(255, 0, 0, 0.6);
+    }
+
+    /* 라운드 시간 선택 스타일 */
+    .time-selection {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 10px 0;
+    }
+
+    .time-option {
+      padding: 8px 16px;
+      background: rgba(0, 0, 0, 0.5);
+      border: 2px solid #666;
+      border-radius: 5px;
+      color: #fff;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 14px;
+      font-weight: bold;
+    }
+
+    .time-option:hover {
+      border-color: #ff4444;
+      background: rgba(255, 0, 0, 0.2);
+    }
+
+    .time-option.selected {
+      border-color: #ff0000;
+      background: rgba(255, 0, 0, 0.3);
+      box-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+    }
+
+    /* Select 스타일 */
+    select {
+      width: 100%;
+      padding: 10px;
+      background: rgba(0, 0, 0, 0.5);
+      border: 2px solid #ff0000;
+      border-radius: 5px;
+      color: #fff;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    select:focus {
+      outline: none;
+      border-color: #ff4444;
+      box-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+    }
+
+    select option {
+      background: #1a1a1a;
+      color: #fff;
+    }
+
+    /* 체크박스 스타일 */
+    input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      margin-right: 10px;
+      cursor: pointer;
+      accent-color: #ff0000;
+    }
+
+    .form-group label {
+      cursor: pointer;
+      user-select: none;
+    }
+
+    /* 구분선 */
+    .divider {
+      text-align: center;
+      color: #888;
+      margin: 20px 0;
+      position: relative;
+    }
+
+    .divider::before,
+    .divider::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      width: 40%;
+      height: 1px;
+      background: linear-gradient(to right, transparent, #ff0000, transparent);
+    }
+
+    .divider::before {
+      left: 0;
+    }
+
+    .divider::after {
+      right: 0;
+    }
+
+    /* 코드 입력 그룹 */
+    .code-input-group {
+      display: flex;
+      gap: 10px;
+    }
+
+    .code-input-group input {
+      flex: 1;
+    }
+
+    .code-input-group .icon-button {
+      width: 50px;
+      height: 100%;
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    /* 방 아이템 스타일 */
+    .room-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px;
+      margin: 8px 0;
+      background: linear-gradient(135deg, rgba(255, 0, 0, 0.1), rgba(139, 0, 0, 0.1));
+      border: 2px solid rgba(255, 0, 0, 0.3);
+      border-radius: 8px;
+      transition: all 0.3s ease;
+    }
+
+    .room-item:hover {
+      border-color: #ff0000;
+      background: linear-gradient(135deg, rgba(255, 0, 0, 0.2), rgba(139, 0, 0, 0.2));
+      transform: translateX(5px);
+    }
+
+    .room-info {
+      flex: 1;
+    }
+
+    .room-name {
+      font-size: 18px;
+      font-weight: bold;
+      color: #fff;
+      margin-bottom: 8px;
+    }
+
+    .room-details {
+      display: flex;
+      gap: 15px;
+      font-size: 14px;
+      color: #ccc;
+    }
+
+    .room-details span {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .room-status {
+      padding: 2px 8px;
+      border-radius: 3px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    .room-status.waiting {
+      background: rgba(0, 255, 0, 0.2);
+      color: #0f0;
+    }
+
+    .room-status.starting {
+      background: rgba(255, 255, 0, 0.2);
+      color: #ff0;
+    }
+
+    .room-status.playing {
+      background: rgba(255, 0, 0, 0.2);
+      color: #f00;
+    }
+
+    .join-room-btn {
+      padding: 10px 20px;
+      background: linear-gradient(135deg, #c41e3a 0%, #8b0000 100%);
+      border: 2px solid #ff0000;
+      border-radius: 5px;
+      color: #fff;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .join-room-btn:hover {
+      background: linear-gradient(135deg, #ff0000 0%, #c41e3a 100%);
+      transform: scale(1.05);
+      box-shadow: 0 0 15px rgba(255, 0, 0, 0.5);
+    }
+
+    /* 반응형 디자인 */
+    @media (max-width: 768px) {
+      .map-selection {
+        grid-template-columns: 1fr;
+      }
+
+      .time-selection {
+        justify-content: center;
+      }
+
+      .room-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+      }
+
+      .join-room-btn {
+        width: 100%;
+      }
+    }
+
+    /* 캐릭터 선택 팝업 스타일 */
+    #characterSelectPopup {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.9);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 2000;
+    }
+
+    .character-select-container {
+      display: flex;
+      gap: 40px;
+      max-width: 1400px;
+      width: 90%;
+      max-height: 90vh;
+    }
+
+    .character-grid-wrapper {
+      flex: 1;
+      background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+      border: 3px solid #ff0000;
+      border-radius: 15px;
+      padding: 30px;
+      overflow-y: auto;
+      box-shadow: 0 0 30px rgba(255, 0, 0, 0.5);
+    }
+
+    .character-grid-wrapper h2 {
+      color: #fff;
+      text-align: center;
+      margin-bottom: 20px;
+      font-size: 32px;
+      text-shadow: 0 0 10px rgba(255, 0, 0, 0.8);
+    }
+
+    .character-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 15px;
+    }
+
+    .character-card {
+      background: linear-gradient(145deg, #2a2a2a, #1a1a1a);
+      border: 3px solid #666;
+      border-radius: 12px;
+      padding: 10px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-align: center;
+    }
+
+    .character-card img {
+      width: 100%;
+      height: 100px;
+      object-fit: contain;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      background: rgba(0, 0, 0, 0.3);
+    }
+
+    .character-card-name {
+      color: #fff;
+      font-size: 14px;
+      font-weight: bold;
+      text-shadow: 0 0 5px rgba(255, 0, 0, 0.5);
+    }
+
+    .character-card:hover {
+      border-color: #ff4444;
+      transform: translateY(-5px);
+      box-shadow: 0 5px 20px rgba(255, 0, 0, 0.4);
+    }
+
+    .character-card.selected {
+      border-color: #ff0000;
+      background: linear-gradient(145deg, #3a1a1a, #2a0a0a);
+      box-shadow: 0 0 25px rgba(255, 0, 0, 0.7);
+      animation: selectPulse 1.5s infinite;
+    }
+
+    @keyframes selectPulse {
+      0%, 100% { box-shadow: 0 0 25px rgba(255, 0, 0, 0.7); }
+      50% { box-shadow: 0 0 35px rgba(255, 0, 0, 1); }
+    }
+
+    .character-preview-panel {
+      width: 500px;
+      background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+      border: 3px solid #ff0000;
+      border-radius: 15px;
+      padding: 30px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      box-shadow: 0 0 30px rgba(255, 0, 0, 0.5);
+    }
+
+    .preview-3d-container {
+      width: 100%;
+      height: 400px;
+      background: rgba(0, 0, 0, 0.5);
+      border: 2px solid #ff0000;
+      border-radius: 10px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+    }
+
+    .preview-3d-container canvas {
+      width: 100% !important;
+      height: 100% !important;
+    }
+
+    .preview-info {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .preview-info h3 {
+      color: #fff;
+      text-align: center;
+      font-size: 24px;
+      text-shadow: 0 0 10px rgba(255, 0, 0, 0.8);
+      margin: 0;
+    }
+
+    .nickname-input-container {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .nickname-input-container label {
+      color: #fff;
+      font-weight: bold;
+    }
+
+    .nickname-input-container input {
+      padding: 12px;
+      background: rgba(0, 0, 0, 0.5);
+      border: 2px solid #ff0000;
+      border-radius: 5px;
+      color: #fff;
+      font-size: 16px;
+    }
+
+    .nickname-input-container input:focus {
+      outline: none;
+      border-color: #ff4444;
+      box-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+    }
+
+    .preview-buttons {
+      display: flex;
+      gap: 10px;
+    }
+
+    .character-select-btn {
+      flex: 1;
+      padding: 15px;
+      font-size: 18px;
+      font-weight: bold;
+      border: 2px solid #666;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+    }
+
+    .character-select-btn.primary {
+      background: linear-gradient(135deg, #c41e3a 0%, #8b0000 100%);
+      border-color: #ff0000;
+      color: #fff;
+    }
+
+    .character-select-btn.primary:hover {
+      background: linear-gradient(135deg, #ff0000 0%, #c41e3a 100%);
+      transform: scale(1.05);
+      box-shadow: 0 0 20px rgba(255, 0, 0, 0.6);
+    }
+
+    .character-select-btn:not(.primary) {
+      background: linear-gradient(135deg, #444 0%, #222 100%);
+      color: #fff;
+    }
+
+    .character-select-btn:not(.primary):hover {
+      background: linear-gradient(135deg, #555 0%, #333 100%);
+      transform: scale(1.05);
+    }
+
+    /* 캐릭터 선택 반응형 */
+    @media (max-width: 1200px) {
+      .character-select-container {
+        flex-direction: column;
+      }
+
+      .character-preview-panel {
+        width: 100%;
+      }
+
+      .character-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+
+    @media (max-width: 768px) {
+      .character-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+
+      .preview-3d-container {
+        height: 300px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .character-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    /* 대기방 스타일 */
+    .waiting-room-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%);
+      z-index: 1500;
+      display: none;
+      flex-direction: column;
+      padding: 30px;
+      gap: 20px;
+    }
+
+    /* 대기방 헤더 */
+    .waiting-room-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 30px;
+      background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
+      border: 2px solid #ff0000;
+      border-radius: 15px;
+      box-shadow: 0 0 20px rgba(255, 0, 0, 0.3);
+    }
+
+    .room-title-section {
+      display: flex;
+      align-items: center;
+      gap: 30px;
+    }
+
+    .room-title-section h2 {
+      color: #fff;
+      font-size: 32px;
+      margin: 0;
+      text-shadow: 0 0 10px rgba(255, 0, 0, 0.8);
+    }
+
+    .room-code-display {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(0, 0, 0, 0.5);
+      padding: 8px 15px;
+      border-radius: 8px;
+      border: 1px solid #ff0000;
+    }
+
+    .room-code-display span {
+      color: #fff;
+      font-size: 18px;
+    }
+
+    .room-code {
+      font-family: 'Courier New', monospace;
+      font-weight: bold;
+      color: #ffaa00;
+      font-size: 24px;
+      letter-spacing: 2px;
+    }
+
+    .copy-btn {
+      background: none;
+      border: none;
+      color: #fff;
+      cursor: pointer;
+      font-size: 18px;
+      padding: 5px 10px;
+      border-radius: 5px;
+      transition: all 0.3s ease;
+    }
+
+    .copy-btn:hover {
+      background: rgba(255, 0, 0, 0.2);
+    }
+
+    .leave-room-btn {
+      padding: 12px 30px;
+      font-size: 18px;
+      font-weight: bold;
+      background: linear-gradient(135deg, #666 0%, #444 100%);
+      border: 2px solid #888;
+      border-radius: 10px;
+      color: #fff;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .leave-room-btn:hover {
+      background: linear-gradient(135deg, #888 0%, #666 100%);
+      border-color: #aaa;
+      transform: scale(1.05);
+    }
+
+    /* 대기방 컨텐츠 */
+    .waiting-room-content {
+      flex: 1;
+      display: flex;
+      gap: 30px;
+      overflow: hidden;
+    }
+
+    /* 플레이어 섹션 */
+    .players-section {
+      flex: 2;
+      background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
+      border: 2px solid #ff0000;
+      border-radius: 15px;
+      padding: 25px;
+      overflow-y: auto;
+      box-shadow: 0 0 20px rgba(255, 0, 0, 0.3);
+    }
+
+    .players-section h3 {
+      color: #fff;
+      font-size: 24px;
+      margin-bottom: 20px;
+      text-shadow: 0 0 10px rgba(255, 0, 0, 0.8);
+    }
+
+    .player-slots-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 15px;
+    }
+
+    .player-slot {
+      background: linear-gradient(145deg, #333 0%, #222 100%);
+      border: 2px solid #666;
+      border-radius: 12px;
+      padding: 15px;
+      transition: all 0.3s ease;
+    }
+
+    .player-slot.my-slot {
+      border-color: #ffaa00;
+      box-shadow: 0 0 15px rgba(255, 170, 0, 0.5);
+    }
+
+    .player-slot.empty-slot {
+      border-style: dashed;
+      border-color: #444;
+      background: linear-gradient(145deg, #1a1a1a 0%, #0a0a0a 100%);
+    }
+
+    .player-slot-content {
+      display: flex;
+      gap: 15px;
+      align-items: center;
+    }
+
+    .player-avatar {
+      width: 60px;
+      height: 60px;
+      border-radius: 10px;
+      overflow: hidden;
+      background: rgba(0, 0, 0, 0.5);
+      border: 2px solid #ff0000;
+    }
+
+    .player-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .player-info {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .player-name {
+      color: #fff;
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    .host-badge {
+      display: inline-block;
+      background: linear-gradient(135deg, #ffaa00 0%, #ff8800 100%);
+      color: #000;
+      padding: 3px 10px;
+      border-radius: 5px;
+      font-size: 12px;
+      font-weight: bold;
+      width: fit-content;
+    }
+
+    .player-status {
+      font-size: 14px;
+      font-weight: bold;
+    }
+
+    .player-status.ready {
+      color: #00ff00;
+    }
+
+    .player-status.not-ready {
+      color: #888;
+    }
+
+    .empty-slot-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      padding: 20px;
+      opacity: 0.4;
+    }
+
+    .empty-icon {
+      font-size: 40px;
+    }
+
+    .empty-text {
+      color: #666;
+      font-size: 14px;
+    }
+
+    /* 방 설정 섹션 */
+    .room-settings-section {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .map-preview-container {
+      background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
+      border: 2px solid #ff0000;
+      border-radius: 15px;
+      padding: 25px;
+      box-shadow: 0 0 20px rgba(255, 0, 0, 0.3);
+    }
+
+    .map-preview-container h3 {
+      color: #fff;
+      font-size: 20px;
+      margin-bottom: 15px;
+      text-shadow: 0 0 10px rgba(255, 0, 0, 0.8);
+    }
+
+    .map-preview {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16/9;
+      border-radius: 10px;
+      overflow: hidden;
+      margin-bottom: 15px;
+      border: 2px solid #ff0000;
+    }
+
+    .map-preview img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .map-preview-name {
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+      background: rgba(0, 0, 0, 0.8);
+      color: #fff;
+      padding: 8px 15px;
+      border-radius: 8px;
+      font-size: 18px;
+      font-weight: bold;
+      border: 1px solid #ff0000;
+    }
+
+    .change-map-btn {
+      width: 100%;
+      padding: 12px;
+      font-size: 16px;
+      font-weight: bold;
+      background: linear-gradient(135deg, #c41e3a 0%, #8b0000 100%);
+      border: 2px solid #ff0000;
+      border-radius: 10px;
+      color: #fff;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .change-map-btn:hover {
+      background: linear-gradient(135deg, #ff0000 0%, #c41e3a 100%);
+      transform: scale(1.05);
+      box-shadow: 0 0 15px rgba(255, 0, 0, 0.5);
+    }
+
+    .room-info-section {
+      background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
+      border: 2px solid #ff0000;
+      border-radius: 15px;
+      padding: 25px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      box-shadow: 0 0 20px rgba(255, 0, 0, 0.3);
+    }
+
+    .info-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid #444;
+    }
+
+    .info-item:last-child {
+      border-bottom: none;
+    }
+
+    .info-label {
+      color: #aaa;
+      font-size: 16px;
+    }
+
+    .info-value {
+      color: #fff;
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    /* 대기방 푸터 */
+    .waiting-room-footer {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      padding: 20px;
+      background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
+      border: 2px solid #ff0000;
+      border-radius: 15px;
+      box-shadow: 0 0 20px rgba(255, 0, 0, 0.3);
+    }
+
+    .footer-btn {
+      padding: 15px 40px;
+      font-size: 20px;
+      font-weight: bold;
+      background: linear-gradient(135deg, #666 0%, #444 100%);
+      border: 2px solid #888;
+      border-radius: 10px;
+      color: #fff;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      min-width: 180px;
+    }
+
+    .footer-btn:hover {
+      background: linear-gradient(135deg, #888 0%, #666 100%);
+      border-color: #aaa;
+      transform: scale(1.05);
+    }
+
+    .footer-btn.ready-btn {
+      background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
+      border-color: #4CAF50;
+    }
+
+    .footer-btn.ready-btn:hover {
+      background: linear-gradient(135deg, #66BB6A 0%, #4CAF50 100%);
+      border-color: #66BB6A;
+    }
+
+    .footer-btn.ready-btn.ready-active {
+      background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);
+      border-color: #FF9800;
+    }
+
+    .footer-btn.ready-btn.ready-active:hover {
+      background: linear-gradient(135deg, #FFB74D 0%, #FF9800 100%);
+      border-color: #FFB74D;
+    }
+
+    .footer-btn.start-btn {
+      background: linear-gradient(135deg, #c41e3a 0%, #8b0000 100%);
+      border-color: #ff0000;
+    }
+
+    .footer-btn.start-btn:hover:not(:disabled) {
+      background: linear-gradient(135deg, #ff0000 0%, #c41e3a 100%);
+      transform: scale(1.05);
+      box-shadow: 0 0 20px rgba(255, 0, 0, 0.6);
+    }
+
+    .footer-btn.start-btn:disabled {
+      background: linear-gradient(135deg, #444 0%, #222 100%);
+      border-color: #666;
+      color: #888;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* 대기방 반응형 */
+    @media (max-width: 1200px) {
+      .waiting-room-content {
+        flex-direction: column;
+      }
+
+      .players-section {
+        flex: 1;
+      }
+
+      .room-settings-section {
+        flex: none;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .room-title-section {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+      }
+
+      .player-slots-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .waiting-room-footer {
+        flex-wrap: wrap;
+      }
+
+      .footer-btn {
+        flex: 1;
+        min-width: 150px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="background-overlay"></div>
+
+  <div id="menu">
+    <h1>ASURA</h1>
+
+    <div class="button-container">
+      <button class="menu-button" id="createRoomButton">
+        <span>방 생성</span>
+      </button>
+
+      <button class="menu-button" id="joinRoomButton">
+        <span>방 참가</span>
+      </button>
+
+      <button class="menu-button" id="settingsButton">
+        <span>설정</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Socket.io 클라이언트 -->
+  <script src="/socket.io/socket.io.js"></script>
+
+  <!-- Three.js 및 관련 라이브러리 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+  <!-- 메인 애플리케이션 (ES6 모듈) -->
+  <script type="module" src="./js/main.js"></script>
+</body>
+</html>
