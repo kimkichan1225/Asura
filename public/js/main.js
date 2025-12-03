@@ -301,16 +301,12 @@ class AsuraGame extends EventEmitter {
 
     // 이벤트 리스너 등록
     setTimeout(() => {
-      console.log('[Main] Setting up join room popup listeners');
-
       // 방 목록 업데이트 리스너
       this.network.room.on('RoomListUpdated', (rooms) => {
-        console.log('[Main] RoomListUpdated callback triggered');
         this.updateRoomList(rooms);
       });
 
       // 방 목록 즉시 요청
-      console.log('[Main] Requesting initial room list');
       this.network.room.requestRoomList();
 
       // 새로고침 버튼
@@ -349,20 +345,13 @@ class AsuraGame extends EventEmitter {
    * 방 목록 업데이트
    */
   updateRoomList(rooms) {
-    console.log('[Main] updateRoomList called with', rooms.length, 'rooms');
     const roomListContainer = document.getElementById('roomList');
-    if (!roomListContainer) {
-      console.error('[Main] roomList container not found');
-      return;
-    }
+    if (!roomListContainer) return;
 
     if (rooms.length === 0) {
-      console.log('[Main] No rooms available');
       roomListContainer.innerHTML = '<div class="empty-message">현재 공개된 방이 없습니다.</div>';
       return;
     }
-
-    console.log('[Main] Rendering room list with rooms:', rooms);
 
     roomListContainer.innerHTML = rooms.map(room => `
       <div class="room-item" data-room-id="${room.id}">
@@ -665,21 +654,11 @@ class AsuraGame extends EventEmitter {
    */
   onRoomUpdated(data) {
     this.logger.info('Room updated:', data);
-    console.log('[Main] onRoomUpdated called with data:', {
-      inRoom: this.state.inRoom,
-      hasSocketId: !!this.network.socket.id,
-      socketId: this.network.socket.id,
-      roomPlayers: data.room?.players
-    });
-
     this.state.currentRoom = data.room;
 
     // 대기실 UI 업데이트
     if (this.state.inRoom && this.network.socket.id) {
-      console.log('[Main] Updating waiting room UI');
       this.ui.waitingRoom.update(data.room, this.network.socket.id);
-    } else {
-      console.warn('[Main] Not updating UI - inRoom:', this.state.inRoom, 'hasSocketId:', !!this.network.socket.id);
     }
   }
 
@@ -688,8 +667,6 @@ class AsuraGame extends EventEmitter {
    */
   onRoomLeft(data) {
     this.logger.info('Room left:', data);
-    console.log('[Main] onRoomLeft called - cleaning up state');
-
     this.state.inRoom = false;
     this.state.currentRoom = null;
 
@@ -698,8 +675,6 @@ class AsuraGame extends EventEmitter {
 
     // 메인 메뉴 표시
     this.ui.menu.show();
-
-    console.log('[Main] onRoomLeft completed - returned to main menu');
   }
 
   /**

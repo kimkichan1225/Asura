@@ -41,33 +41,23 @@ export class RoomManager {
     });
 
     this.socket.on('roomLeft', (data) => {
-      console.log('[RoomManager] Received roomLeft event:', data);
       this.currentRoom = null;
       if (this.callbacks.onRoomLeft) {
-        console.log('[RoomManager] Calling onRoomLeft callback');
         this.callbacks.onRoomLeft(data);
       }
     });
 
     this.socket.on('roomUpdate', (data) => {
-      console.log('[RoomManager] Received roomUpdate event:', data);
       this.currentRoom = data.room;
       if (this.callbacks.onRoomUpdated) {
-        console.log('[RoomManager] Calling onRoomUpdated callback');
         this.callbacks.onRoomUpdated(data);
-      } else {
-        console.warn('[RoomManager] No onRoomUpdated callback registered');
       }
     });
 
     this.socket.on('roomListUpdate', (rooms) => {
-      console.log('[RoomManager] Received roomListUpdate event:', rooms);
       this.roomList = rooms;
       if (this.callbacks.onRoomListUpdated) {
-        console.log('[RoomManager] Calling onRoomListUpdated callback with', rooms.length, 'rooms');
         this.callbacks.onRoomListUpdated(rooms);
-      } else {
-        console.warn('[RoomManager] No onRoomListUpdated callback registered');
       }
     });
 
@@ -151,12 +141,8 @@ export class RoomManager {
    * 방 나가기
    */
   leaveRoom() {
-    console.log('[RoomManager] Leaving room...');
     if (this.socket && this.socket.isConnected()) {
       this.socket.emit('leaveRoom');
-      console.log('[RoomManager] Leave room event emitted');
-    } else {
-      console.warn('[RoomManager] Socket not connected, cannot leave room');
     }
     this.currentRoom = null;
   }
@@ -165,7 +151,6 @@ export class RoomManager {
    * 방 목록 요청
    */
   requestRoomList() {
-    console.log('[RoomManager] Requesting room list...');
     this.socket.emit('getRoomList');
   }
 

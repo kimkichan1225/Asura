@@ -189,12 +189,6 @@ export class WaitingRoomUI {
    * 대기방 업데이트
    */
   update(roomData, myPlayerId) {
-    console.log('[WaitingRoomUI] update() called with:', {
-      myPlayerId,
-      roomPlayers: roomData?.players,
-      playerCount: roomData?.players?.length
-    });
-
     this.roomData = roomData;
     this.isHost = roomData.hostId === myPlayerId;
 
@@ -209,8 +203,6 @@ export class WaitingRoomUI {
 
     // 버튼 상태 업데이트
     this.updateButtonStates(myPlayerId);
-
-    console.log('[WaitingRoomUI] update() completed');
   }
 
   /**
@@ -232,21 +224,11 @@ export class WaitingRoomUI {
    * 플레이어 슬롯 업데이트
    */
   updatePlayerSlots(myPlayerId) {
-    console.log('[WaitingRoomUI] updatePlayerSlots() called');
     const slotsContainer = document.getElementById('playerSlots');
-    if (!slotsContainer) {
-      console.error('[WaitingRoomUI] playerSlots container not found');
-      return;
-    }
+    if (!slotsContainer) return;
 
     const players = this.roomData.players || [];
     const maxPlayers = this.roomData.maxPlayers;
-
-    console.log('[WaitingRoomUI] Updating player slots:', {
-      playerCount: players.length,
-      maxPlayers,
-      playerIds: players.map(p => p.id)
-    });
 
     // 제목 업데이트
     const titleEl = document.querySelector('.players-section h3');
