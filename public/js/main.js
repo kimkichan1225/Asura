@@ -404,15 +404,90 @@ class AsuraGame extends EventEmitter {
   /**
    * 코드로 방 참가
    */
-  async joinRoomByCode(roomCode) {
+  async joinRoomByCode(roomCode, password = null) {
     this.logger.info('Joining room by code:', roomCode);
 
     try {
-      await this.network.room.joinRoom(roomCode);
+      await this.network.room.joinRoom(roomCode, password);
       this.ui.popup.close('joinRoomPopup');
       // onRoomJoined에서 캐릭터 선택 창을 열 것임
     } catch (error) {
       this.logger.error('Failed to join room by code:', error);
+
+      // 비밀번호가 필요한 경우 비밀번호 입력 팝업 표시
+      if (error.message === '비밀번호가 틀렸습니다.' || error.message.includes('비밀번호')) {
+        this.showPasswordPopup(roomCode);
+      } else {
+        this.showError('방 참가 실패', error.message);
+      }
+    }
+  }
+
+  /**
+   * 비밀번호 입력 팝업 표시
+   */
+  showPasswordPopup(roomCode) {
+    this.ui.popup.createPopup('passwordPopup', {
+      title: '비밀번호 입력',
+      content: `
+        <div class="form-group">
+          <label>이 방은 비밀방입니다. 비밀번호를 입력하세요:</label>
+          <input type="password" id="roomPasswordInput" placeholder="비밀번호 입력">
+        </div>
+      `,
+      buttons: [
+        {
+          text: '확인',
+          className: 'popup-button primary',
+          callback: () => this.confirmPasswordAndJoin(roomCode)
+        },
+        {
+          text: '취소',
+          className: 'popup-button'
+        }
+      ]
+    });
+
+    this.ui.popup.open('passwordPopup');
+
+    // Enter 키로 확인 및 포커스
+    setTimeout(() => {
+      const passwordInput = document.getElementById('roomPasswordInput');
+      if (passwordInput) {
+        passwordInput.focus();
+        passwordInput.addEventListener('keypress', (e) => {
+          if (e.key === 'Enter') {
+            this.confirmPasswordAndJoin(roomCode);
+            this.ui.popup.close('passwordPopup');
+          }
+        });
+      }
+    }, 100);
+  }
+
+  /**
+   * 비밀번호 확인 후 방 참가
+   */
+  async confirmPasswordAndJoin(roomCode) {
+    const passwordInput = document.getElementById('roomPasswordInput');
+    const password = passwordInput?.value;
+
+    if (!password) {
+      this.showError('오류', '비밀번호를 입력해주세요.');
+      return;
+    }
+
+    // 비밀번호를 변수에 저장 후 진행
+    const pwd = password;
+
+    try {
+      await this.network.room.joinRoom(roomCode, pwd);
+      this.ui.popup.close('passwordPopup');
+      this.ui.popup.close('joinRoomPopup');
+      // onRoomJoined에서 캐릭터 선택 창을 열 것임
+    } catch (error) {
+      this.logger.error('Failed to join room with password:', error);
+      // 비밀번호가 틀린 경우만 에러 표시 (다른 에러는 무시하지 않음)
       this.showError('방 참가 실패', error.message);
     }
   }
@@ -953,6 +1028,12 @@ class AsuraGame extends EventEmitter {
    */
   onNetworkError(error) {
     this.logger.error('Network error:', error);
+
+    // 비밀번호 에러는 joinRoomByCode에서 별도로 처리하므로 여기서는 무시
+    if (error.message && (error.message.includes('비밀번호') || error.message === '비밀번호가 틀렸습니다.')) {
+      return;
+    }
+
     this.showError('네트워크 오류', error.message || '연결에 문제가 발생했습니다.');
   }
 
