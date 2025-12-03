@@ -126,6 +126,29 @@ class Room {
   }
 
   /**
+   * 라운드 시간 변경
+   */
+  setRoundTime(roundTime) {
+    if (this.gameState !== 'waiting') {
+      throw new Error('게임 중에는 라운드 시간을 변경할 수 없습니다.');
+    }
+    this.roundTime = roundTime;
+  }
+
+  /**
+   * 최대 인원 변경
+   */
+  setMaxPlayers(maxPlayers) {
+    if (this.gameState !== 'waiting') {
+      throw new Error('게임 중에는 최대 인원을 변경할 수 없습니다.');
+    }
+    if (maxPlayers < this.players.size) {
+      throw new Error('현재 플레이어 수보다 작은 값은 설정할 수 없습니다.');
+    }
+    this.maxPlayers = maxPlayers;
+  }
+
+  /**
    * 방 정보 (클라이언트용)
    */
   toJSON() {

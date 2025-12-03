@@ -71,6 +71,16 @@ class SocketHandler {
       this.handleChangeMap(socket, data);
     });
 
+    // 라운드 시간 변경
+    socket.on('changeRoundTime', (data) => {
+      this.handleChangeRoundTime(socket, data);
+    });
+
+    // 최대 인원 변경
+    socket.on('changeMaxPlayers', (data) => {
+      this.handleChangeMaxPlayers(socket, data);
+    });
+
     // 게임 시작
     socket.on('startGame', () => {
       this.handleStartGame(socket);
@@ -318,6 +328,64 @@ class SocketHandler {
     room.setMap(data.map);
 
     console.log(`[Room] Map changed to ${data.map} in room ${room.id}`);
+
+    // 방 안의 모든 플레이어에게 업데이트
+    this.io.to(room.id).emit('roomUpdate', {
+      room: room.toJSON()
+    });
+  }
+
+  /**
+   * 라운드 시간 변경 처리
+   */
+  handleChangeRoundTime(socket, data) {
+    const player = this.players.get(socket.id);
+    if (!player || !player.roomId) return;
+
+    const room = this.roomManager.getRoom(player.roomId);
+    if (!room) return;
+
+    // 방장만 변경 가능
+    if (!room.isHost(socket.id)) {
+      socket.emit('error', { message: '방장만 라운드 시간을 변경할 수 있습니다.' });
+      return;
+    }
+
+    room.setRoundTime(data.roundTime);
+
+    console.log(`[Room] Round time changed to ${data.roundTime} in room ${room.id}`);
+
+    // 방 안의 모든 플레이어에게 업데이트
+    this.io.to(room.id).emit('roomUpdate', {
+      room: room.toJSON()
+    });
+  }
+
+  /**
+   * 최대 인원 변경 처리
+   */
+  handleChangeMaxPlayers(socket, data) {
+    const player = this.players.get(socket.id);
+    if (!player || !player.roomId) return;
+
+    const room = this.roomManager.getRoom(player.roomId);
+    if (!room) return;
+
+    // 방장만 변경 가능
+    if (!room.isHost(socket.id)) {
+      socket.emit('error', { message: '방장만 최대 인원을 변경할 수 있습니다.' });
+      return;
+    }
+
+    // 현재 플레이어 수보다 작을 수 없음
+    if (data.maxPlayers < room.getPlayerCount()) {
+      socket.emit('error', { message: '현재 플레이어 수보다 작은 값은 설정할 수 없습니다.' });
+      return;
+    }
+
+    room.setMaxPlayers(data.maxPlayers);
+
+    console.log(`[Room] Max players changed to ${data.maxPlayers} in room ${room.id}`);
 
     // 방 안의 모든 플레이어에게 업데이트
     this.io.to(room.id).emit('roomUpdate', {

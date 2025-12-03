@@ -96,6 +96,8 @@ class AsuraGame extends EventEmitter {
       .onStartGame(() => this.handleStartGame())
       .onChangeCharacter(() => this.handleChangeCharacter())
       .onChangeMap(() => this.handleChangeMap())
+      .onChangeRoundTime(() => this.handleChangeRoundTime())
+      .onChangeMaxPlayers(() => this.handleChangeMaxPlayers())
       .onLeaveRoom(() => this.handleLeaveRoom());
 
     this.logger.debug('UI modules initialized');
@@ -275,7 +277,7 @@ class AsuraGame extends EventEmitter {
         <div class="form-group">
           <label>방 코드로 참가:</label>
           <div class="code-input-group">
-            <input type="text" id="roomCodeInput" placeholder="4자리 방 코드" maxlength="4">
+            <input type="text" id="roomCodeInput" placeholder="6자리 방 코드" maxlength="6">
             <button id="quickJoinBtn" class="icon-button">→</button>
           </div>
         </div>
@@ -403,8 +405,16 @@ class AsuraGame extends EventEmitter {
    * 코드로 방 참가
    */
   async joinRoomByCode(roomCode) {
-    // TODO: 구현
     this.logger.info('Joining room by code:', roomCode);
+
+    try {
+      await this.network.room.joinRoom(roomCode);
+      this.ui.popup.close('joinRoomPopup');
+      // onRoomJoined에서 캐릭터 선택 창을 열 것임
+    } catch (error) {
+      this.logger.error('Failed to join room by code:', error);
+      this.showError('방 참가 실패', error.message);
+    }
   }
 
   /**
@@ -587,6 +597,8 @@ class AsuraGame extends EventEmitter {
       await this.network.room.joinRoom(roomCode);
 
       this.ui.popup.close('joinRoomPopup');
+
+      // onRoomJoined에서 캐릭터 선택 창을 열 것임
     } catch (error) {
       this.logger.error('Failed to join room:', error);
       this.showError('방 참가 실패', error.message);
@@ -777,6 +789,148 @@ class AsuraGame extends EventEmitter {
     } catch (error) {
       this.logger.error('Failed to change map:', error);
       this.showError('오류', '맵을 변경하지 못했습니다.');
+    }
+  }
+
+  /**
+   * 라운드 시간 변경 처리
+   */
+  handleChangeRoundTime() {
+    this.logger.info('Change round time button clicked');
+
+    // 라운드 시간 옵션 생성
+    const roundTimeOptions = Config.ROUND_TIME_OPTIONS.map(time => `
+      <button type="button" class="time-option ${time === this.state.currentRoom.roundTime ? 'selected' : ''}" data-time="${time}">
+        ${time}초
+      </button>
+    `).join('');
+
+    this.ui.popup.createPopup('changeRoundTimePopup', {
+      title: '라운드 시간 변경',
+      content: `
+        <div class="time-selection" id="timeSelectionChange">
+          ${roundTimeOptions}
+        </div>
+      `,
+      buttons: [
+        {
+          text: '변경',
+          className: 'popup-button primary',
+          callback: () => this.confirmRoundTimeChange()
+        },
+        {
+          text: '취소',
+          className: 'popup-button'
+        }
+      ]
+    });
+
+    this.ui.popup.open('changeRoundTimePopup');
+
+    // 시간 선택 이벤트
+    setTimeout(() => {
+      const timeOptions = document.querySelectorAll('#timeSelectionChange .time-option');
+      timeOptions.forEach(option => {
+        option.addEventListener('click', () => {
+          timeOptions.forEach(opt => opt.classList.remove('selected'));
+          option.classList.add('selected');
+        });
+      });
+    }, 100);
+  }
+
+  /**
+   * 라운드 시간 변경 확인
+   */
+  async confirmRoundTimeChange() {
+    const selectedTime = parseInt(document.querySelector('#timeSelectionChange .time-option.selected')?.dataset.time);
+
+    if (!selectedTime) {
+      this.showError('오류', '라운드 시간을 선택해주세요.');
+      return;
+    }
+
+    try {
+      await this.network.socket.emit('changeRoundTime', { roundTime: selectedTime });
+      this.logger.info('Round time change requested:', selectedTime);
+      this.ui.popup.close('changeRoundTimePopup');
+    } catch (error) {
+      this.logger.error('Failed to change round time:', error);
+      this.showError('오류', '라운드 시간을 변경하지 못했습니다.');
+    }
+  }
+
+  /**
+   * 최대 인원 변경 처리
+   */
+  handleChangeMaxPlayers() {
+    this.logger.info('Change max players button clicked');
+
+    // 최대 인원 옵션 생성
+    const maxPlayersOptions = [2, 3, 4, 5, 6, 7, 8].map(num => `
+      <button type="button" class="time-option ${num === this.state.currentRoom.maxPlayers ? 'selected' : ''}" data-players="${num}">
+        ${num}명
+      </button>
+    `).join('');
+
+    this.ui.popup.createPopup('changeMaxPlayersPopup', {
+      title: '최대 인원 변경',
+      content: `
+        <div class="time-selection" id="maxPlayersSelectionChange">
+          ${maxPlayersOptions}
+        </div>
+      `,
+      buttons: [
+        {
+          text: '변경',
+          className: 'popup-button primary',
+          callback: () => this.confirmMaxPlayersChange()
+        },
+        {
+          text: '취소',
+          className: 'popup-button'
+        }
+      ]
+    });
+
+    this.ui.popup.open('changeMaxPlayersPopup');
+
+    // 인원 선택 이벤트
+    setTimeout(() => {
+      const playerOptions = document.querySelectorAll('#maxPlayersSelectionChange .time-option');
+      playerOptions.forEach(option => {
+        option.addEventListener('click', () => {
+          playerOptions.forEach(opt => opt.classList.remove('selected'));
+          option.classList.add('selected');
+        });
+      });
+    }, 100);
+  }
+
+  /**
+   * 최대 인원 변경 확인
+   */
+  async confirmMaxPlayersChange() {
+    const selectedPlayers = parseInt(document.querySelector('#maxPlayersSelectionChange .time-option.selected')?.dataset.players);
+
+    if (!selectedPlayers) {
+      this.showError('오류', '최대 인원을 선택해주세요.');
+      return;
+    }
+
+    // 현재 플레이어 수보다 작은 값은 선택할 수 없음
+    if (selectedPlayers < this.state.currentRoom.currentPlayers) {
+      this.showError('오류', `현재 플레이어 수(${this.state.currentRoom.currentPlayers}명)보다 작은 값은 선택할 수 없습니다.`);
+      return;
+    }
+
+    try {
+      await this.network.socket.emit('changeMaxPlayers', { maxPlayers: selectedPlayers });
+      this.logger.info('Max players change requested:', selectedPlayers);
+      this.ui.popup.close('changeMaxPlayersPopup');
+    } catch (error) {
+      this.logger.error('Failed to change max players:', error);
+      this.showError('오류', '최대 인원을 변경하지 못했습니다.');
     }
   }
 

@@ -12,6 +12,8 @@ export class WaitingRoomUI {
       onStartGame: null,
       onChangeCharacter: null,
       onChangeMap: null,
+      onChangeRoundTime: null,
+      onChangeMaxPlayers: null,
       onLeaveRoom: null
     };
   }
@@ -31,7 +33,7 @@ export class WaitingRoomUI {
           <h2 id="roomNameDisplay">방 이름</h2>
           <div class="room-code-display">
             <span>방 코드:</span>
-            <span id="roomCodeDisplay" class="room-code">0000</span>
+            <span id="roomCodeDisplay" class="room-code">------</span>
             <button id="copyRoomCodeBtn" class="copy-btn" title="복사">📋</button>
           </div>
         </div>
@@ -63,11 +65,17 @@ export class WaitingRoomUI {
           <div class="room-info-section">
             <div class="info-item">
               <span class="info-label">라운드 시간:</span>
-              <span class="info-value" id="roundTimeDisplay">180초</span>
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <span class="info-value" id="roundTimeDisplay">180초</span>
+                <button id="changeRoundTimeBtn" class="change-setting-btn" style="display: none;">변경</button>
+              </div>
             </div>
             <div class="info-item">
               <span class="info-label">최대 인원:</span>
-              <span class="info-value" id="maxPlayersDisplay">4명</span>
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <span class="info-value" id="maxPlayersDisplay">4명</span>
+                <button id="changeMaxPlayersBtn" class="change-setting-btn" style="display: none;">변경</button>
+              </div>
             </div>
           </div>
         </div>
@@ -126,6 +134,26 @@ export class WaitingRoomUI {
       changeMapBtn.addEventListener('click', () => {
         if (this.callbacks.onChangeMap) {
           this.callbacks.onChangeMap();
+        }
+      });
+    }
+
+    // 라운드 시간 변경 버튼
+    const changeRoundTimeBtn = document.getElementById('changeRoundTimeBtn');
+    if (changeRoundTimeBtn) {
+      changeRoundTimeBtn.addEventListener('click', () => {
+        if (this.callbacks.onChangeRoundTime) {
+          this.callbacks.onChangeRoundTime();
+        }
+      });
+    }
+
+    // 최대 인원 변경 버튼
+    const changeMaxPlayersBtn = document.getElementById('changeMaxPlayersBtn');
+    if (changeMaxPlayersBtn) {
+      changeMaxPlayersBtn.addEventListener('click', () => {
+        if (this.callbacks.onChangeMaxPlayers) {
+          this.callbacks.onChangeMaxPlayers();
         }
       });
     }
@@ -323,6 +351,18 @@ export class WaitingRoomUI {
     if (changeMapBtn) {
       changeMapBtn.style.display = this.isHost ? 'block' : 'none';
     }
+
+    // 라운드 시간 변경 버튼 (방장만)
+    const changeRoundTimeBtn = document.getElementById('changeRoundTimeBtn');
+    if (changeRoundTimeBtn) {
+      changeRoundTimeBtn.style.display = this.isHost ? 'inline-block' : 'none';
+    }
+
+    // 최대 인원 변경 버튼 (방장만)
+    const changeMaxPlayersBtn = document.getElementById('changeMaxPlayersBtn');
+    if (changeMaxPlayersBtn) {
+      changeMaxPlayersBtn.style.display = this.isHost ? 'inline-block' : 'none';
+    }
   }
 
   /**
@@ -378,6 +418,16 @@ export class WaitingRoomUI {
 
   onChangeMap(callback) {
     this.callbacks.onChangeMap = callback;
+    return this;
+  }
+
+  onChangeRoundTime(callback) {
+    this.callbacks.onChangeRoundTime = callback;
+    return this;
+  }
+
+  onChangeMaxPlayers(callback) {
+    this.callbacks.onChangeMaxPlayers = callback;
     return this;
   }
 

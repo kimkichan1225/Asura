@@ -8,7 +8,7 @@ const Room = require('./Room');
 class RoomManager {
   constructor() {
     this.rooms = new Map();
-    this.roomIdCounter = 1;
+    this.usedCodes = new Set();
   }
 
   /**
@@ -29,6 +29,7 @@ class RoomManager {
   deleteRoom(roomId) {
     const deleted = this.rooms.delete(roomId);
     if (deleted) {
+      this.usedCodes.delete(roomId);
       console.log(`[RoomManager] Room deleted: ${roomId}`);
     }
     return deleted;
@@ -87,11 +88,29 @@ class RoomManager {
   }
 
   /**
-   * 방 ID 생성
+   * 방 ID 생성 (랜덤 6자리 영숫자)
    */
   generateRoomId() {
-    // 4자리 숫자 코드 생성
-    return String(this.roomIdCounter++).padStart(4, '0');
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let code;
+    let attempts = 0;
+    const maxAttempts = 100;
+
+    do {
+      code = '';
+      for (let i = 0; i < 6; i++) {
+        code += characters.charAt(Math.floor(Math.random() * characters.length));
+      }
+      attempts++;
+    } while (this.usedCodes.has(code) && attempts < maxAttempts);
+
+    if (attempts >= maxAttempts) {
+      // Fallback: 타임스탬프 기반 코드
+      code = Date.now().toString(36).toUpperCase().slice(-6);
+    }
+
+    this.usedCodes.add(code);
+    return code;
   }
 
   /**
