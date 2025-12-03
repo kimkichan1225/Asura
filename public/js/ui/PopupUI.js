@@ -13,6 +13,11 @@ export class PopupUI {
    * 팝업 생성
    */
   createPopup(id, config) {
+    // 기존 팝업이 있다면 제거
+    if (this.popups[id]) {
+      this.remove(id);
+    }
+
     const popup = document.createElement('div');
     popup.id = id;
     popup.className = 'popup-overlay';
