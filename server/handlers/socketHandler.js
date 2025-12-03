@@ -113,16 +113,17 @@ class SocketHandler {
         hostId: socket.id
       });
 
-      // 플레이어를 방에 추가
+      // 플레이어를 방에 추가 (방장은 자동으로 ready)
       room.addPlayer(player);
       player.joinRoom(room.id);
+      player.setReady(true);
 
       // 소켓을 방에 추가
       socket.join(room.id);
 
       console.log(`[Room] Player ${socket.id} created room ${room.id}`);
 
-      // 응답
+      // 응답 - 클라이언트는 캐릭터 선택 후 방 데이터를 받음
       if (callback) {
         callback({
           success: true,

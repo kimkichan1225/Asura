@@ -323,7 +323,7 @@ export class CharacterSelectUI {
       });
     }
 
-    this.close();
+    // close()는 서버 응답 후 main.js에서 호출됨
   }
 
   /**

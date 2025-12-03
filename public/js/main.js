@@ -121,6 +121,11 @@ class AsuraGame extends EventEmitter {
         .on('RoomUpdated', (data) => this.onRoomUpdated(data))
         .on('Error', (error) => this.onNetworkError(error));
 
+      // 캐릭터 선택 완료 이벤트
+      this.network.socket.on('characterSelected', (data) => {
+        this.onCharacterSelectedConfirmed(data);
+      });
+
       this.logger.debug('Network modules initialized');
     } catch (error) {
       this.logger.error('Network initialization failed:', error);
@@ -155,7 +160,7 @@ class AsuraGame extends EventEmitter {
       content: `
         <div class="form-group">
           <label>방 이름:</label>
-          <input type="text" id="roomNameInput" placeholder="방 이름을 입력하세요" maxlength="20" value="${this.state.playerName}의 방">
+          <input type="text" id="roomNameInput" placeholder="방 이름을 입력하세요" maxlength="20" value="">
         </div>
 
         <div class="form-group">
@@ -529,7 +534,7 @@ class AsuraGame extends EventEmitter {
     Storage.set(Config.STORAGE_KEYS.SELECTED_CHARACTER, data.character);
     Storage.set(Config.STORAGE_KEYS.PLAYER_NAME, data.nickname);
 
-    // 서버에 캐릭터 선택 전송 및 방 입장
+    // 서버에 캐릭터 선택 전송
     try {
       await this.network.socket.emit('selectCharacter', {
         character: data.character,
@@ -540,6 +545,28 @@ class AsuraGame extends EventEmitter {
     } catch (error) {
       this.logger.error('Failed to send character selection:', error);
       this.showError('오류', '캐릭터 선택을 전송하지 못했습니다.');
+    }
+  }
+
+  /**
+   * 캐릭터 선택 확인 처리 (서버로부터)
+   */
+  onCharacterSelectedConfirmed(data) {
+    this.logger.info('Character selection confirmed by server:', data);
+    this.logger.debug('Current state:', {
+      inRoom: this.state.inRoom,
+      hasCurrentRoom: !!this.state.currentRoom
+    });
+
+    // 캐릭터 선택 창 닫기
+    this.ui.characterSelect.close();
+
+    // 방에 있다면 대기실 표시
+    if (this.state.inRoom && this.state.currentRoom) {
+      this.logger.info('Opening waiting room...');
+      this.showWaitingRoom(this.state.currentRoom);
+    } else {
+      this.logger.warn('Cannot show waiting room - not in room or no current room data');
     }
   }
 
@@ -594,8 +621,8 @@ class AsuraGame extends EventEmitter {
     this.state.inRoom = true;
     this.state.currentRoom = data.room;
 
-    // 대기실 UI 표시
-    this.showWaitingRoom(data.room);
+    // 캐릭터 선택 창이 이미 열려있으므로 대기실은 캐릭터 선택 후에 표시
+    // showWaitingRoom은 onCharacterSelectedConfirmed에서 호출됨
   }
 
   /**
@@ -606,8 +633,8 @@ class AsuraGame extends EventEmitter {
     this.state.inRoom = true;
     this.state.currentRoom = data.room;
 
-    // 대기실 UI 표시
-    this.showWaitingRoom(data.room);
+    // 캐릭터 선택 창 열기
+    this.ui.characterSelect.open();
   }
 
   /**

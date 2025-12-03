@@ -8,6 +8,7 @@ export class SocketManager {
     this.socket = null;
     this.connected = false;
     this.eventHandlers = {};
+    this.id = null;
   }
 
   /**
@@ -20,12 +21,14 @@ export class SocketManager {
 
         this.socket.on('connect', () => {
           this.connected = true;
+          this.id = this.socket.id;
           console.log('Socket connected:', this.socket.id);
           resolve(this.socket);
         });
 
         this.socket.on('disconnect', () => {
           this.connected = false;
+          this.id = null;
           console.log('Socket disconnected');
         });
 

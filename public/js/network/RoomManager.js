@@ -12,6 +12,7 @@ export class RoomManager {
       onRoomCreated: null,
       onRoomJoined: null,
       onRoomLeft: null,
+      onRoomUpdated: null,
       onRoomListUpdated: null,
       onPlayerJoined: null,
       onPlayerLeft: null,
@@ -43,6 +44,13 @@ export class RoomManager {
       this.currentRoom = null;
       if (this.callbacks.onRoomLeft) {
         this.callbacks.onRoomLeft(data);
+      }
+    });
+
+    this.socket.on('roomUpdate', (data) => {
+      this.currentRoom = data.room;
+      if (this.callbacks.onRoomUpdated) {
+        this.callbacks.onRoomUpdated(data);
       }
     });
 
@@ -78,6 +86,17 @@ export class RoomManager {
   async createRoom(config) {
     try {
       const response = await this.socket.emitWithAck('createRoom', config);
+
+      // 성공 시 콜백 호출
+      if (response.success && response.room) {
+        this.currentRoom = response.room;
+        if (this.callbacks.onRoomCreated) {
+          this.callbacks.onRoomCreated(response);
+        }
+      } else if (!response.success) {
+        throw new Error(response.error || '방 생성 실패');
+      }
+
       return response;
     } catch (error) {
       console.error('Failed to create room:', error);
@@ -97,6 +116,17 @@ export class RoomManager {
         roomId,
         password
       });
+
+      // 성공 시 콜백 호출
+      if (response.success && response.room) {
+        this.currentRoom = response.room;
+        if (this.callbacks.onRoomJoined) {
+          this.callbacks.onRoomJoined(response);
+        }
+      } else if (!response.success) {
+        throw new Error(response.error || '방 참가 실패');
+      }
+
       return response;
     } catch (error) {
       console.error('Failed to join room:', error);
