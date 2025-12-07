@@ -1120,10 +1120,12 @@ class AsuraGame extends EventEmitter {
 
     for (let i = 0; i < data.room.players.length; i++) {
       const player = data.room.players[i];
+      const isLocal = player.id === this.network.socket.id; // 로컬 플레이어 판별
       await this.game.scene.loadPlayer(
         player.id,
         player.character,
-        playerPositions[i]
+        playerPositions[i],
+        isLocal
       );
     }
 

@@ -4,6 +4,7 @@
  */
 
 import { Config } from '../utils/Config.js';
+import { PlayerController } from './PlayerController.js';
 
 // Three.js는 CDN으로 전역 로드됨
 const THREE = window.THREE;
@@ -19,6 +20,8 @@ export class GameScene {
 
     this.mapModel = null;
     this.players = new Map(); // playerId -> player object
+    this.localPlayer = null; // 로컬 플레이어
+    this.playerController = null; // 플레이어 컨트롤러
     this.animationId = null;
 
     // 로딩 상태
@@ -131,8 +134,8 @@ export class GameScene {
   /**
    * 플레이어 캐릭터 로드
    */
-  async loadPlayer(playerId, characterId, position = { x: 0, y: 0, z: 0 }) {
-    console.log('[GameScene] Loading player:', playerId, characterId);
+  async loadPlayer(playerId, characterId, position = { x: 0, y: 0, z: 0 }, isLocal = false) {
+    console.log('[GameScene] Loading player:', playerId, characterId, 'isLocal:', isLocal);
 
     // 이미 로드된 플레이어면 제거
     if (this.players.has(playerId)) {
@@ -180,13 +183,23 @@ export class GameScene {
       }
 
       // 플레이어 데이터 저장
-      this.players.set(playerId, {
+      const playerData = {
         model: playerModel,
         mixer: mixer,
         characterId: characterId,
         currentAction: currentAction,
-        animations: gltf.animations
-      });
+        animations: gltf.animations,
+        isLocal: isLocal
+      };
+
+      this.players.set(playerId, playerData);
+
+      // 로컬 플레이어인 경우 컨트롤러 생성
+      if (isLocal) {
+        this.localPlayer = playerData;
+        this.playerController = new PlayerController(playerData, this.camera);
+        console.log('[GameScene] PlayerController created for local player');
+      }
 
       this.scene.add(playerModel);
       this.updateLoadingProgress(`플레이어 로드: ${character.name}`);
@@ -253,9 +266,14 @@ export class GameScene {
 
       const delta = clock.getDelta();
 
-      // 플레이어 애니메이션 업데이트
-      this.players.forEach((player) => {
-        if (player.mixer) {
+      // 로컬 플레이어 컨트롤러 업데이트
+      if (this.playerController) {
+        this.playerController.update(delta);
+      }
+
+      // 원격 플레이어 애니메이션 업데이트 (로컬 플레이어는 컨트롤러에서 처리됨)
+      this.players.forEach((player, playerId) => {
+        if (!player.isLocal && player.mixer) {
           player.mixer.update(delta);
         }
       });
