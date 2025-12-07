@@ -26,6 +26,7 @@ export class PlayerController {
     this.gravity = -30;
     this.isJumping = false;
     this.velocityY = 0;
+    this.jumpSpeed = 0.5; // 점프 애니메이션 재생 속도
 
     // 대쉬 관련
     this.isDashing = false;
@@ -274,12 +275,15 @@ export class PlayerController {
     newAction.reset().fadeIn(0.3).play();
 
     // 점프/대쉬 애니메이션 특수 설정
-    if (name === 'Jump') {
+    if (name.toLowerCase().includes('jump')) {
       newAction.setLoop(THREE.LoopOnce);
       newAction.clampWhenFinished = true;
-    } else if (name === 'Roll') {
+      newAction.time = 0.25; // 시작 시간 설정
+      newAction.timeScale = this.jumpSpeed; // 재생 속도 설정
+    } else if (name.toLowerCase().includes('roll')) {
       newAction.setLoop(THREE.LoopOnce);
       newAction.clampWhenFinished = true;
+      newAction.time = 0.0;
       newAction.timeScale = 1.2;
     }
 
