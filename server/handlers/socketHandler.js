@@ -467,11 +467,12 @@ class SocketHandler {
       player.updateRotation(data.rotation);
     }
 
-    // 같은 방의 다른 플레이어들에게 전송
+    // 같은 방의 다른 플레이어들에게 전송 (애니메이션 정보 포함)
     socket.to(player.roomId).emit('playerMoved', {
       playerId: socket.id,
       position: player.position,
-      rotation: player.rotation
+      rotation: player.rotation,
+      animation: data.animation // 애니메이션 정보 추가
     });
   }
 

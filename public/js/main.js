@@ -1105,7 +1105,7 @@ class AsuraGame extends EventEmitter {
     const container = document.getElementById('gameContainer');
     container.style.display = 'block';
 
-    this.game.scene = new GameScene();
+    this.game.scene = new GameScene(this.network.socket);
     this.game.scene.init(container);
 
     // 전체 로딩 아이템 수 설정 (맵 1개 + 플레이어 수)

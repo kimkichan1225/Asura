@@ -6,15 +6,20 @@
 const THREE = window.THREE;
 
 export class PlayerController {
-  constructor(player, camera, thirdPersonCamera) {
+  constructor(player, camera, thirdPersonCamera, socket) {
     this.player = player; // { model, mixer, characterId, currentAction, animations }
     this.camera = camera;
     this.thirdPersonCamera = thirdPersonCamera; // ThirdPersonCamera 인스턴스
+    this.socket = socket; // Socket.io 인스턴스
 
     // 이동 관련
     this.velocity = new THREE.Vector3(0, 0, 0);
     this.speed = 5; // 걷기 속도
     this.runSpeed = 10; // 달리기 속도
+
+    // 네트워크 동기화
+    this.lastSyncTime = 0;
+    this.syncInterval = 1000 / 30; // 30Hz (초당 30번 전송)
 
     // 점프 관련
     this.jumpPower = 12;
@@ -48,13 +53,18 @@ export class PlayerController {
       dash: false      // L (대쉬)
     };
 
-    // 현재 애니메이션
+    // 현재 애니메이션 (실제 클립 이름으로 초기화)
     this.currentAnimationName = 'Idle';
+
+    // 초기 애니메이션 클립 이름 설정
+    if (this.player.currentAction) {
+      this.currentAnimationName = this.player.currentAction.getClip().name;
+    }
 
     // 입력 초기화
     this.initInput();
 
-    console.log('[PlayerController] Initialized');
+    console.log('[PlayerController] Initialized with animation:', this.currentAnimationName);
   }
 
   /**
@@ -251,7 +261,8 @@ export class PlayerController {
       return;
     }
 
-    this.currentAnimationName = name;
+    // 실제 클립 이름 저장 (동기화용)
+    this.currentAnimationName = clip.name;
 
     // 현재 애니메이션 페이드 아웃
     if (this.player.currentAction) {
@@ -274,7 +285,7 @@ export class PlayerController {
 
     this.player.currentAction = newAction;
 
-    console.log(`[PlayerController] Animation changed: ${name}`);
+    console.log(`[PlayerController] Animation changed: ${name} (clip: ${clip.name})`);
   }
 
   /**
@@ -368,6 +379,37 @@ export class PlayerController {
         const isRunning = isMoving && this.keys.shift;
         this.setAnimation(isMoving ? (isRunning ? 'Run' : 'Walk') : 'Idle');
       }
+    }
+
+    // 네트워크 동기화 (30Hz)
+    this.syncWithServer(timeElapsed);
+  }
+
+  /**
+   * 서버와 위치/회전/애니메이션 동기화
+   */
+  syncWithServer(timeElapsed) {
+    if (!this.socket) return;
+
+    this.lastSyncTime += timeElapsed * 1000; // ms로 변환
+
+    if (this.lastSyncTime >= this.syncInterval) {
+      this.lastSyncTime = 0;
+
+      // 서버로 위치, 회전, 애니메이션 전송
+      this.socket.emit('updatePosition', {
+        position: {
+          x: this.player.model.position.x,
+          y: this.player.model.position.y,
+          z: this.player.model.position.z
+        },
+        rotation: {
+          x: this.player.model.rotation.x,
+          y: this.player.model.rotation.y,
+          z: this.player.model.rotation.z
+        },
+        animation: this.currentAnimationName
+      });
     }
   }
 

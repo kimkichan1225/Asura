@@ -12,7 +12,8 @@ const THREE = window.THREE;
 const GLTFLoader = window.THREE.GLTFLoader;
 
 export class GameScene {
-  constructor() {
+  constructor(socket) {
+    this.socket = socket; // Socket.io 인스턴스
     this.scene = null;
     this.camera = null;
     this.renderer = null;
@@ -29,6 +30,23 @@ export class GameScene {
     // 로딩 상태
     this.totalLoadItems = 0;
     this.loadedItems = 0;
+
+    // 네트워크 이벤트 등록
+    this.initNetworkEvents();
+  }
+
+  /**
+   * 네트워크 이벤트 초기화
+   */
+  initNetworkEvents() {
+    if (!this.socket) return;
+
+    // 다른 플레이어 움직임 수신
+    this.socket.on('playerMoved', (data) => {
+      this.onPlayerMoved(data);
+    });
+
+    console.log('[GameScene] Network events initialized');
   }
 
   /**
@@ -200,7 +218,7 @@ export class GameScene {
       if (isLocal) {
         this.localPlayer = playerData;
         this.thirdPersonCamera = new ThirdPersonCamera(this.camera, playerData.model);
-        this.playerController = new PlayerController(playerData, this.camera, this.thirdPersonCamera);
+        this.playerController = new PlayerController(playerData, this.camera, this.thirdPersonCamera, this.socket);
         console.log('[GameScene] PlayerController and ThirdPersonCamera created for local player');
       }
 
@@ -301,6 +319,53 @@ export class GameScene {
       cancelAnimationFrame(this.animationId);
       this.animationId = null;
       console.log('[GameScene] Render loop stopped');
+    }
+  }
+
+  /**
+   * 다른 플레이어 움직임 수신 처리
+   */
+  onPlayerMoved(data) {
+    const player = this.players.get(data.playerId);
+    if (!player || player.isLocal) return; // 로컬 플레이어는 무시
+
+    // 위치 업데이트
+    if (data.position) {
+      player.model.position.set(data.position.x, data.position.y, data.position.z);
+    }
+
+    // 회전 업데이트
+    if (data.rotation) {
+      player.model.rotation.set(data.rotation.x, data.rotation.y, data.rotation.z);
+    }
+
+    // 애니메이션 업데이트
+    if (data.animation && player.animations && player.mixer) {
+      // 정확한 이름으로 먼저 찾기
+      let clip = player.animations.find(anim => anim.name === data.animation);
+
+      // 없으면 부분 매칭
+      if (!clip) {
+        clip = player.animations.find(anim =>
+          anim.name.toLowerCase().includes(data.animation.toLowerCase())
+        );
+      }
+
+      if (clip) {
+        // 현재 애니메이션과 다르면 변경
+        if (!player.currentAction || player.currentAction.getClip().name !== clip.name) {
+          if (player.currentAction) {
+            player.currentAction.fadeOut(0.3);
+          }
+          player.currentAction = player.mixer.clipAction(clip);
+          player.currentAction.reset().fadeIn(0.3).play();
+
+          console.log(`[GameScene] Remote player ${data.playerId} animation: ${clip.name}`);
+        }
+      } else {
+        console.warn(`[GameScene] Animation not found for remote player: ${data.animation}`);
+        console.log('[GameScene] Available animations:', player.animations.map(a => a.name));
+      }
     }
   }
 
