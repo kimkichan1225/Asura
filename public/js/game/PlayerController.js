@@ -6,9 +6,10 @@
 const THREE = window.THREE;
 
 export class PlayerController {
-  constructor(player, camera) {
+  constructor(player, camera, thirdPersonCamera) {
     this.player = player; // { model, mixer, characterId, currentAction, animations }
     this.camera = camera;
+    this.thirdPersonCamera = thirdPersonCamera; // ThirdPersonCamera 인스턴스
 
     // 이동 관련
     this.velocity = new THREE.Vector3(0, 0, 0);
@@ -161,11 +162,9 @@ export class PlayerController {
       moveDir.normalize();
     } else {
       moveDir.normalize();
-      // 카메라 방향 기준으로 회전
-      const cameraDirection = new THREE.Vector3();
-      this.camera.getWorldDirection(cameraDirection);
-      const angle = Math.atan2(cameraDirection.x, cameraDirection.z);
-      moveDir.applyAxisAngle(new THREE.Vector3(0, 1, 0), angle);
+      // ThirdPersonCamera의 회전 각도 사용
+      const rotationAngle = this.thirdPersonCamera ? this.thirdPersonCamera.getRotationAngle() : 0;
+      moveDir.applyAxisAngle(new THREE.Vector3(0, 1, 0), rotationAngle);
     }
 
     this.dashDirection.copy(moveDir);
@@ -322,10 +321,9 @@ export class PlayerController {
 
       // 카메라 방향 기준으로 회전
       if (velocity.lengthSq() > 0) {
-        const cameraDirection = new THREE.Vector3();
-        this.camera.getWorldDirection(cameraDirection);
-        const angle = Math.atan2(cameraDirection.x, cameraDirection.z);
-        velocity.applyAxisAngle(new THREE.Vector3(0, 1, 0), angle);
+        // ThirdPersonCamera의 회전 각도 사용
+        const rotationAngle = this.thirdPersonCamera ? this.thirdPersonCamera.getRotationAngle() : 0;
+        velocity.applyAxisAngle(new THREE.Vector3(0, 1, 0), rotationAngle);
 
         // 캐릭터 회전
         const moveAngle = Math.atan2(velocity.x, velocity.z);

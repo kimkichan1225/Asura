@@ -5,6 +5,7 @@
 
 import { Config } from '../utils/Config.js';
 import { PlayerController } from './PlayerController.js';
+import { ThirdPersonCamera } from './ThirdPersonCamera.js';
 
 // Three.js는 CDN으로 전역 로드됨
 const THREE = window.THREE;
@@ -22,6 +23,7 @@ export class GameScene {
     this.players = new Map(); // playerId -> player object
     this.localPlayer = null; // 로컬 플레이어
     this.playerController = null; // 플레이어 컨트롤러
+    this.thirdPersonCamera = null; // 3인칭 카메라
     this.animationId = null;
 
     // 로딩 상태
@@ -194,11 +196,12 @@ export class GameScene {
 
       this.players.set(playerId, playerData);
 
-      // 로컬 플레이어인 경우 컨트롤러 생성
+      // 로컬 플레이어인 경우 컨트롤러 및 카메라 생성
       if (isLocal) {
         this.localPlayer = playerData;
-        this.playerController = new PlayerController(playerData, this.camera);
-        console.log('[GameScene] PlayerController created for local player');
+        this.thirdPersonCamera = new ThirdPersonCamera(this.camera, playerData.model);
+        this.playerController = new PlayerController(playerData, this.camera, this.thirdPersonCamera);
+        console.log('[GameScene] PlayerController and ThirdPersonCamera created for local player');
       }
 
       this.scene.add(playerModel);
@@ -269,6 +272,11 @@ export class GameScene {
       // 로컬 플레이어 컨트롤러 업데이트
       if (this.playerController) {
         this.playerController.update(delta);
+      }
+
+      // 3인칭 카메라 업데이트
+      if (this.thirdPersonCamera) {
+        this.thirdPersonCamera.update();
       }
 
       // 원격 플레이어 애니메이션 업데이트 (로컬 플레이어는 컨트롤러에서 처리됨)
