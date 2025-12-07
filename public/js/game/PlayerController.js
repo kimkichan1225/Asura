@@ -249,6 +249,11 @@ export class PlayerController {
       return;
     }
 
+    // 점프 중에는 점프 애니메이션 외 다른 애니메이션 재생 방지
+    if (this.isJumping && !name.toLowerCase().includes('jump')) {
+      return;
+    }
+
     // 같은 애니메이션이면 무시
     if (this.currentAnimationName === name) return;
 
@@ -319,9 +324,12 @@ export class PlayerController {
 
       if (this.dashTimer <= 0) {
         this.isDashing = false;
-        const isMoving = this.keys.forward || this.keys.backward || this.keys.left || this.keys.right;
-        const isRunning = isMoving && this.keys.shift;
-        this.setAnimation(isMoving ? (isRunning ? 'Run' : 'Walk') : 'Idle');
+        // 점프 중이 아닐 때만 애니메이션 변경
+        if (!this.isJumping) {
+          const isMoving = this.keys.forward || this.keys.backward || this.keys.left || this.keys.right;
+          const isRunning = isMoving && this.keys.shift;
+          this.setAnimation(isMoving ? (isRunning ? 'Run' : 'Walk') : 'Idle');
+        }
       }
     }
     // 일반 이동
@@ -353,8 +361,10 @@ export class PlayerController {
         const moveSpeed = isRunning ? this.runSpeed : this.speed;
         velocity.normalize().multiplyScalar(moveSpeed * timeElapsed);
 
-        // 애니메이션 설정
-        this.setAnimation(isRunning ? 'Run' : 'Walk');
+        // 애니메이션 설정 (점프 중이 아닐 때만)
+        if (!this.isJumping) {
+          this.setAnimation(isRunning ? 'Run' : 'Walk');
+        }
       } else {
         // 정지 상태
         if (!this.isJumping && !this.isAttacking) {
