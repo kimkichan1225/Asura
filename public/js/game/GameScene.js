@@ -67,12 +67,12 @@ export class GameScene {
    * 조명 추가
    */
   addLights() {
-    // 환경광
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+    // 환경광 (밝기 증가)
+    const ambientLight = new THREE.AmbientLight(0xffffff, 1.2);
     this.scene.add(ambientLight);
 
-    // 방향광 (태양)
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    // 방향광 (태양) - 밝기 증가
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 1.5);
     directionalLight.position.set(10, 20, 10);
     directionalLight.castShadow = true;
     directionalLight.shadow.camera.left = -50;
@@ -82,6 +82,11 @@ export class GameScene {
     directionalLight.shadow.mapSize.width = 2048;
     directionalLight.shadow.mapSize.height = 2048;
     this.scene.add(directionalLight);
+
+    // 추가 보조 조명 (뒷면도 밝게)
+    const backLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    backLight.position.set(-10, 10, -10);
+    this.scene.add(backLight);
   }
 
   /**
