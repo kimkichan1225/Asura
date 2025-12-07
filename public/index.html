@@ -1325,6 +1325,21 @@
     </div>
   </div>
 
+  <!-- 게임 씬 컨테이너 -->
+  <div id="gameContainer" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 3000;"></div>
+
+  <!-- 로딩 화면 -->
+  <div id="loadingScreen" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #000000 0%, #1a0000 100%); z-index: 4000; align-items: center; justify-content: center; flex-direction: column;">
+    <div style="text-align: center;">
+      <h1 style="color: #ff0000; font-size: 48px; margin-bottom: 30px; text-shadow: 0 0 20px rgba(255, 0, 0, 0.8);">ASURA</h1>
+      <div style="width: 300px; height: 6px; background: rgba(255, 255, 255, 0.1); border-radius: 3px; overflow: hidden; margin-bottom: 20px;">
+        <div id="loadingProgress" style="width: 0%; height: 100%; background: linear-gradient(90deg, #ff0000 0%, #ff6666 100%); transition: width 0.3s ease; box-shadow: 0 0 10px rgba(255, 0, 0, 0.8);"></div>
+      </div>
+      <p id="loadingText" style="color: #ffffff; font-size: 18px; margin: 0;">로딩 중...</p>
+      <p id="loadingPercent" style="color: #ff6666; font-size: 24px; font-weight: bold; margin-top: 10px;">0%</p>
+    </div>
+  </div>
+
   <!-- Socket.io 클라이언트 -->
   <script src="/socket.io/socket.io.js"></script>
 

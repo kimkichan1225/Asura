@@ -448,8 +448,10 @@ class SocketHandler {
       room.setGameState('playing');
       this.io.to(room.id).emit('gameStarted', {
         startTime: Date.now(),
-        roundTime: room.roundTime
+        roundTime: room.roundTime,
+        room: room.toJSON()
       });
+      console.log(`[Game] Game started in room ${room.id}`);
     }, 3000);
   }
 

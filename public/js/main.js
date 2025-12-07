@@ -9,6 +9,7 @@ import { CharacterSelectUI } from './ui/CharacterSelectUI.js';
 import { WaitingRoomUI } from './ui/WaitingRoomUI.js';
 import { SocketManager } from './network/SocketManager.js';
 import { RoomManager } from './network/RoomManager.js';
+import { GameScene } from './game/GameScene.js';
 import { EventEmitter } from './utils/EventEmitter.js';
 import { Logger } from './utils/Logger.js';
 import { Config } from './utils/Config.js';
@@ -35,6 +36,11 @@ class AsuraGame extends EventEmitter {
     this.network = {
       socket: null,
       room: null
+    };
+
+    this.game = {
+      scene: null,
+      isGameStarted: false
     };
 
     this.state = {
@@ -126,6 +132,16 @@ class AsuraGame extends EventEmitter {
       // 캐릭터 선택 완료 이벤트
       this.network.socket.on('characterSelected', (data) => {
         this.onCharacterSelectedConfirmed(data);
+      });
+
+      // 게임 시작 중 이벤트 (3초 카운트다운)
+      this.network.socket.on('gameStarting', (data) => {
+        this.onGameStarting(data);
+      });
+
+      // 게임 시작 이벤트
+      this.network.socket.on('gameStarted', (data) => {
+        this.onGameStarted(data);
       });
 
       this.logger.debug('Network modules initialized');
@@ -1034,6 +1050,111 @@ class AsuraGame extends EventEmitter {
 
     this.logger.error('Network error:', error);
     this.showError('네트워크 오류', error.message || '연결에 문제가 발생했습니다.');
+  }
+
+  /**
+   * 게임 시작 중 이벤트 (3초 카운트다운)
+   */
+  onGameStarting(data) {
+    this.logger.info('Game starting with countdown:', data);
+
+    // 대기실 닫기
+    this.ui.waitingRoom.close();
+
+    // 로딩 화면 표시
+    const loadingScreen = document.getElementById('loadingScreen');
+    const loadingText = document.getElementById('loadingText');
+    const loadingPercent = document.getElementById('loadingPercent');
+    const loadingProgress = document.getElementById('loadingProgress');
+
+    loadingScreen.style.display = 'flex';
+    loadingProgress.style.width = '0%';
+    loadingPercent.textContent = '';
+
+    // 카운트다운 표시
+    let countdown = data.countdown || 3;
+    loadingText.textContent = `게임 시작 중... ${countdown}`;
+
+    const countdownInterval = setInterval(() => {
+      countdown--;
+      if (countdown > 0) {
+        loadingText.textContent = `게임 시작 중... ${countdown}`;
+      } else {
+        clearInterval(countdownInterval);
+        loadingText.textContent = '로딩 중...';
+      }
+    }, 1000);
+  }
+
+  /**
+   * 게임 시작 이벤트
+   */
+  async onGameStarted(data) {
+    this.logger.info('Game started:', data);
+    this.game.isGameStarted = true;
+
+    // 로딩 화면은 이미 표시되어 있음
+    const loadingScreen = document.getElementById('loadingScreen');
+    const loadingText = document.getElementById('loadingText');
+    const loadingProgress = document.getElementById('loadingProgress');
+
+    loadingText.textContent = '맵 로딩 중...';
+    loadingProgress.style.width = '0%';
+
+    // 게임 씬 초기화
+    const container = document.getElementById('gameContainer');
+    container.style.display = 'block';
+
+    this.game.scene = new GameScene();
+    this.game.scene.init(container);
+
+    // 전체 로딩 아이템 수 설정 (맵 1개 + 플레이어 수)
+    this.game.scene.totalLoadItems = 1 + data.room.players.length;
+    this.game.scene.loadedItems = 0;
+
+    // 맵 로드
+    await this.game.scene.loadMap(data.room.map);
+
+    // 플레이어들 로드
+    const playerPositions = this.calculatePlayerPositions(data.room.players.length);
+
+    for (let i = 0; i < data.room.players.length; i++) {
+      const player = data.room.players[i];
+      await this.game.scene.loadPlayer(
+        player.id,
+        player.character,
+        playerPositions[i]
+      );
+    }
+
+    // 렌더링 시작
+    this.game.scene.startRenderLoop();
+
+    // 로딩 완료 - 1초 후 로딩 화면 숨김
+    setTimeout(() => {
+      loadingScreen.style.display = 'none';
+      this.logger.info('Game scene loaded and ready');
+    }, 1000);
+  }
+
+  /**
+   * 플레이어 시작 위치 계산
+   */
+  calculatePlayerPositions(playerCount) {
+    const positions = [];
+    const radius = 5; // 원의 반지름
+    const angleStep = (Math.PI * 2) / playerCount;
+
+    for (let i = 0; i < playerCount; i++) {
+      const angle = angleStep * i;
+      positions.push({
+        x: Math.cos(angle) * radius,
+        y: 0,
+        z: Math.sin(angle) * radius
+      });
+    }
+
+    return positions;
   }
 
   /**

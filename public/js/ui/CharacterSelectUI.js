@@ -3,37 +3,12 @@
  * 캐릭터 선택 UI 모듈
  */
 
+import { Config } from '../utils/Config.js';
+
 export class CharacterSelectUI {
   constructor() {
     this.selectedCharacter = null;
-    this.characters = [
-      { id: 'BlueSoldier_Female', name: '용병', image: './resources/character/BlueSoldier_Female.png', glb: './resources/New Character/BlueSoldier_Female.glb' },
-      { id: 'Casual_Male', name: '학생', image: './resources/character/Casual_Male.png', glb: './resources/New Character/Casual_Male.glb' },
-      { id: 'Casual2_Female', name: '래퍼', image: './resources/character/Casual2_Female.png', glb: './resources/New Character/Casual2_Female.glb' },
-      { id: 'Casual3_Female', name: '백수', image: './resources/character/Casual3_Female.png', glb: './resources/New Character/Casual3_Female.glb' },
-      { id: 'Chef_Hat', name: '요리사', image: './resources/character/Chef_Hat.png', glb: './resources/New Character/Chef_Hat.glb' },
-      { id: 'Cowboy_Female', name: '총잡이', image: './resources/character/Cowboy_Female.png', glb: './resources/New Character/Cowboy_Female.glb' },
-      { id: 'Doctor_Female_Young', name: '의사', image: './resources/character/Doctor_Female_Young.png', glb: './resources/New Character/Doctor_Female_Young.glb' },
-      { id: 'Goblin_Female', name: '고블린', image: './resources/character/Goblin_Female.png', glb: './resources/New Character/Goblin_Female.glb' },
-      { id: 'Goblin_Male', name: '대머리 고블린', image: './resources/character/Goblin_Male.png', glb: './resources/New Character/Goblin_Male.glb' },
-      { id: 'Kimono_Female', name: '관장', image: './resources/character/Kimono_Female.png', glb: './resources/New Character/Kimono_Female.glb' },
-      { id: 'Knight_Golden_Male', name: '황금기사', image: './resources/character/Knight_Golden_Male.png', glb: './resources/New Character/Knight_Golden_Male.glb' },
-      { id: 'Knight_Male', name: '흑기사', image: './resources/character/Knight_Male.png', glb: './resources/New Character/Knight_Male.glb' },
-      { id: 'Ninja_Male', name: '닌자', image: './resources/character/Ninja_Male.png', glb: './resources/New Character/Ninja_Male.glb' },
-      { id: 'Ninja_Sand', name: '사막닌자', image: './resources/character/Ninja_Sand.png', glb: './resources/New Character/Ninja_Sand.glb' },
-      { id: 'Viking_Male', name: '폭주족', image: './resources/character/Viking_Male.png', glb: './resources/New Character/Viking_Male.glb' },
-      { id: 'OldClassy_Male', name: '신사', image: './resources/character/OldClassy_Male.png', glb: './resources/New Character/OldClassy_Male.glb' },
-      { id: 'Pirate_Male', name: '해적', image: './resources/character/Pirate_Male.png', glb: './resources/New Character/Pirate_Male.glb' },
-      { id: 'Pug', name: '개', image: './resources/character/Pug.png', glb: './resources/New Character/Pug.glb' },
-      { id: 'Soldier_Male', name: '군인', image: './resources/character/Soldier_Male.png', glb: './resources/New Character/Soldier_Male.glb' },
-      { id: 'Elf', name: '마법사', image: './resources/character/Elf.png', glb: './resources/New Character/Elf.glb' },
-      { id: 'Suit_Male', name: '킹스맨', image: './resources/character/Suit_Male.png', glb: './resources/New Character/Suit_Male.glb' },
-      { id: 'VikingHelmet', name: '바이킹', image: './resources/character/VikingHelmet.png', glb: './resources/New Character/VikingHelmet.glb' },
-      { id: 'Wizard', name: '대마법사', image: './resources/character/Wizard.png', glb: './resources/New Character/Wizard.glb' },
-      { id: 'Worker_Female', name: '노동자', image: './resources/character/Worker_Female.png', glb: './resources/New Character/Worker_Female.glb' },
-      { id: 'Zombie_Male', name: '좀비', image: './resources/character/Zombie_Male.png', glb: './resources/New Character/Zombie_Male.glb' },
-      { id: 'Cow', name: '소', image: './resources/character/Cow.png', glb: './resources/New Character/Cow.glb' }
-    ];
+    this.characters = Config.CHARACTERS.CHARACTER_LIST;
 
     this.previewScene = null;
     this.onSelectCallback = null;
@@ -234,7 +209,7 @@ export class CharacterSelectUI {
     }
 
     // 3D 모델 로드
-    this.load3DModel(character.glb);
+    this.load3DModel(character.model || character.glb);
   }
 
   /**
